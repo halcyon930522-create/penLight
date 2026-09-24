@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>スマホペンライト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* タッチ時の選択やズームを防止 */
+        body {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: background-color 0.2s ease;
+        }
+
+        /* 点滅アニメーション（遅い） */
+        @keyframes flash-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* 点滅アニメーション（早い） */
+        @keyframes flash-fast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .strobe-slow {
+            animation: flash-slow 0.8s infinite;
+        }
+
+        .strobe-fast {
+            animation: flash-fast 0.3s infinite;
+        }
+
+        /* 全画面表示時にコントロールを隠す */
+        .ui-hidden #controls {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #controls {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body id="light-body" class="w-screen h-screen bg-red-600 flex flex-col justify-between overflow-hidden relative" onclick="toggleUIVisibility(event)">
+
+    <!-- ヘッダー（タイトル・全画面切り替え） -->
+    <div id="controls" class="p-4 flex justify-between items-center bg-black/30 backdrop-blur-md text-white z-20">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-lightbulb text-yellow-300 text-xl"></i>
+            <h1 class="font-bold text-sm tracking-wider">スマホペンライト</h1>
+        </div>
+        <button onclick="toggleFullscreen(event)" class="bg-white/20 hover:bg-white/30 text-xs px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/30 flex items-center gap-1 active:scale-95 transition">
+            <i class="fa-solid fa-expand"></i> 全画面表示
+        </button>
+    </div>
+
+    <!-- 画面中央の案内メッセージ -->
+    <div id="hint-message" class="text-center text-white/70 text-xs font-medium drop-shadow pointer-events-none z-10 my-auto">
+        画面のタップでUIを表示/非表示<br>
+        下にスワイプまたはパネルで色を変更
+    </div>
+
+    <!-- フッターコントロールパネル -->
+    <div id="controls-footer" class="p-4 bg-black/40 backdrop-blur-md z-20 border-t border-white/10 space-y-3">
+        
+        <!-- 点滅モード切替 -->
+        <div class="flex items-center justify-between text-white text-xs px-1">
+            <span class="font-bold flex items-center gap-1"><i class="fa-solid fa-bolt"></i> 点滅モード:</span>
+            <div class="flex bg-white/10 rounded-lg p-0.5 border border-white/20">
+                <button onclick="setStrobe('off', event)" id="btn-strobe-off" class="px-2.5 py-1 rounded-md bg-white text-black font-bold transition">OFF</button>
+                <button onclick="setStrobe('slow', event)" id="btn-strobe-slow" class="px-2.5 py-1 rounded-md text-white/80 transition">遅い</button>
+                <button onclick="setStrobe('fast', event)" id="btn-strobe-fast" class="px-2.5 py-1 rounded-md text-white/80 transition">早い</button>
+            </div>
+        </div>
+
+        <!-- カラー選択ボタン（8色） -->
+        <div class="grid grid-cols-4 gap-2">
+            <button onclick="changeColor('#ef4444', event)" class="h-11 rounded-xl bg-red-500 border-2 border-white shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">赤</button>
+            <button onclick="changeColor('#ec4899', event)" class="h-11 rounded-xl bg-pink-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">ピンク</button>
+            <button onclick="changeColor('#3b82f6', event)" class="h-11 rounded-xl bg-blue-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">青</button>
+            <button onclick="changeColor('#06b6d4', event)" class="h-11 rounded-xl bg-cyan-400 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">水色</button>
+            
+            <button onclick="changeColor('#22c55e', event)" class="h-11 rounded-xl bg-green-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">緑</button>
+            <button onclick="changeColor('#eab308', event)" class="h-11 rounded-xl bg-yellow-400 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-black text-xs font-bold">黄</button>
+            <button onclick="changeColor('#a855f7', event)" class="h-11 rounded-xl bg-purple-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">紫</button>
+            <button onclick="changeColor('#ffffff', event)" class="h-11 rounded-xl bg-white border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-black text-xs font-bold">白</button>
+        </div>
+    </div>
+
+    <script>
+        const lightBody = document.getElementById('light-body');
+        const hintMessage = document.getElementById('hint-message');
+        let wakeLock = null;
+        let isUIHidden = false;
+
+        // 色変更
+        function changeColor(hexColor, event) {
+            if (event) event.stopPropagation();
+            lightBody.style.backgroundColor = hexColor;
+
+            // 文字色の視認性調整（白色時はテキストを暗くする）
+            if (hexColor === '#ffffff' || hexColor === '#eab308') {
+                hintMessage.classList.remove('text-white/70');
+                hintMessage.classList.add('text-black/60');
+            } else {
+                hintMessage.classList.remove('text-black/60');
+                hintMessage.classList.add('text-white/70');
+            }
+        }
+
+        // 点滅モード設定
+        function setStrobe(type, event) {
+            if (event) event.stopPropagation();
+
+            // クラスのリセット
+            lightBody.classList.remove('strobe-slow', 'strobe-fast');
+
+            // ボタン表示のリセット
+            const btnOff = document.getElementById('btn-strobe-off');
+            const btnSlow = document.getElementById('btn-strobe-slow');
+            const btnFast = document.getElementById('btn-strobe-fast');
+
+            [btnOff, btnSlow, btnFast].forEach(btn => {
+                btn.className = 'px-2.5 py-1 rounded-md text-white/80 transition';
+            });
+
+            if (type === 'slow') {
+                lightBody.classList.add('strobe-slow');
+                btnSlow.className = 'px-2.5 py-1 rounded-md bg-white text-black font-bold transition';
+            } else if (type === 'fast') {
+                lightBody.classList.add('strobe-fast');
+                btnFast.className = 'px-2.5 py-1 rounded-md bg-white text-black font-bold transition';
+            } else {
+                btnOff.className = 'px-2.5 py-1 rounded-md bg-white text-black font-bold transition';
+            }
+        }
+
+        // UI表示/非表示切り替え
+        function toggleUIVisibility(event) {
+            // 操作ボタン自体のクリック時はトグルしない
+            if (event.target.closest('#controls-footer') || event.target.closest('#controls')) {
+                return;
+            }
+
+            isUIHidden = !isUIHidden;
+            const controlsHeader = document.getElementById('controls');
+            const controlsFooter = document.getElementById('controls-footer');
+
+            if (isUIHidden) {
+                controlsHeader.style.opacity = '0';
+                controlsHeader.style.pointerEvents = 'none';
+                controlsFooter.style.opacity = '0';
+                controlsFooter.style.pointerEvents = 'none';
+                hintMessage.style.opacity = '0';
+            } else {
+                controlsHeader.style.opacity = '1';
+                controlsHeader.style.pointerEvents = 'auto';
+                controlsFooter.style.opacity = '1';
+                controlsFooter.style.pointerEvents = 'auto';
+                hintMessage.style.opacity = '1';
+            }
+        }
+
+        // 全画面表示切替
+        function toggleFullscreen(event) {
+            if (event) event.stopPropagation();
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`全画面表示エラー: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // 画面スリープ防止（Wake Lock API）
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.log(`Wake Lock Error: ${err.name}, ${err.message}`);
+            }
+        }
+
+        // ページ読み込み時・可視性変更時にスリープ防止を適用
+        document.addEventListener('DOMContentLoaded', () => {
+            requestWakeLock();
+        });
+
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+    </script>
+</body>
+</html>
