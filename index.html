@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>スマホペンライト</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -35,21 +35,15 @@
             animation: flash-fast 0.3s infinite;
         }
 
-        /* 全画面表示時にコントロールを隠す */
-        .ui-hidden #controls {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #controls {
+        #controls, #controls-footer {
             transition: opacity 0.3s ease;
         }
     </style>
 </head>
-<body id="light-body" class="w-screen h-screen bg-red-600 flex flex-col justify-between overflow-hidden relative" onclick="toggleUIVisibility(event)">
+<body id="light-body" class="w-screen h-[100dvh] bg-red-600 flex flex-col justify-between overflow-hidden relative" onclick="toggleUIVisibility(event)">
 
     <!-- ヘッダー（タイトル・全画面切り替え） -->
-    <div id="controls" class="p-4 flex justify-between items-center bg-black/30 backdrop-blur-md text-white z-20">
+    <div id="controls" class="p-4 pt-6 flex justify-between items-center bg-black/30 backdrop-blur-md text-white z-20">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-lightbulb text-yellow-300 text-xl"></i>
             <h1 class="font-bold text-sm tracking-wider">スマホペンライト</h1>
@@ -62,11 +56,11 @@
     <!-- 画面中央の案内メッセージ -->
     <div id="hint-message" class="text-center text-white/70 text-xs font-medium drop-shadow pointer-events-none z-10 my-auto">
         画面のタップでUIを表示/非表示<br>
-        下にスワイプまたはパネルで色を変更
+        下のパネルで色を変更
     </div>
 
-    <!-- フッターコントロールパネル -->
-    <div id="controls-footer" class="p-4 bg-black/40 backdrop-blur-md z-20 border-t border-white/10 space-y-3">
+    <!-- フッターコントロールパネル（下部バー対策で余白pb-12を追加） -->
+    <div id="controls-footer" class="p-4 pb-12 bg-black/40 backdrop-blur-md z-20 border-t border-white/10 space-y-3">
         
         <!-- 点滅モード切替 -->
         <div class="flex items-center justify-between text-white text-xs px-1">
@@ -80,15 +74,15 @@
 
         <!-- カラー選択ボタン（8色） -->
         <div class="grid grid-cols-4 gap-2">
-            <button onclick="changeColor('#ef4444', event)" class="h-11 rounded-xl bg-red-500 border-2 border-white shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">赤</button>
-            <button onclick="changeColor('#ec4899', event)" class="h-11 rounded-xl bg-pink-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">ピンク</button>
-            <button onclick="changeColor('#3b82f6', event)" class="h-11 rounded-xl bg-blue-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">青</button>
-            <button onclick="changeColor('#06b6d4', event)" class="h-11 rounded-xl bg-cyan-400 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">水色</button>
+            <button onclick="changeColor('#ef4444', event)" class="h-10 rounded-xl bg-red-500 border-2 border-white shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">赤</button>
+            <button onclick="changeColor('#ec4899', event)" class="h-10 rounded-xl bg-pink-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">ピンク</button>
+            <button onclick="changeColor('#3b82f6', event)" class="h-10 rounded-xl bg-blue-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">青</button>
+            <button onclick="changeColor('#06b6d4', event)" class="h-10 rounded-xl bg-cyan-400 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">水色</button>
             
-            <button onclick="changeColor('#22c55e', event)" class="h-11 rounded-xl bg-green-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">緑</button>
-            <button onclick="changeColor('#eab308', event)" class="h-11 rounded-xl bg-yellow-400 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-black text-xs font-bold">黄</button>
-            <button onclick="changeColor('#a855f7', event)" class="h-11 rounded-xl bg-purple-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">紫</button>
-            <button onclick="changeColor('#ffffff', event)" class="h-11 rounded-xl bg-white border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-black text-xs font-bold">白</button>
+            <button onclick="changeColor('#22c55e', event)" class="h-10 rounded-xl bg-green-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">緑</button>
+            <button onclick="changeColor('#eab308', event)" class="h-10 rounded-xl bg-yellow-400 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-black text-xs font-bold">黄</button>
+            <button onclick="changeColor('#a855f7', event)" class="h-10 rounded-xl bg-purple-500 border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-white text-xs font-bold">紫</button>
+            <button onclick="changeColor('#ffffff', event)" class="h-10 rounded-xl bg-white border-2 border-white/30 shadow-md active:scale-95 transition flex items-center justify-center text-black text-xs font-bold">白</button>
         </div>
     </div>
 
@@ -142,7 +136,6 @@
 
         // UI表示/非表示切り替え
         function toggleUIVisibility(event) {
-            // 操作ボタン自体のクリック時はトグルしない
             if (event.target.closest('#controls-footer') || event.target.closest('#controls')) {
                 return;
             }
@@ -180,7 +173,7 @@
             }
         }
 
-        // 画面スリープ防止（Wake Lock API）
+        // 画面スリープ防止
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
@@ -191,7 +184,6 @@
             }
         }
 
-        // ページ読み込み時・可視性変更時にスリープ防止を適用
         document.addEventListener('DOMContentLoaded', () => {
             requestWakeLock();
         });
